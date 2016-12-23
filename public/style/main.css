@@ -40,7 +40,7 @@ body {
 	text-align: center;
 }
 
-.social-box div, a {
+.social-box > div, a {
 	margin-left:10px;
 }
 
