@@ -57,15 +57,6 @@ a.button {
   border-radius:10px;
   border: 1px solid #fff;
   margin-bottom: 70px;
-  -webkit-transition: border-color 1s ease;
- -moz-transition: border-width 0.1s ease;
-   -o-transition: border-width 0.1s ease;
-  -ms-transition: border-width 0.1s ease;
-      transition: border-width 0.1s ease;  
-}
-
-a.button:hover {
-	border-width: 3px;
 }
 
 .footer {
@@ -77,4 +68,8 @@ a.button:hover {
   background-color: rgba(173, 216, 230, 0.74);
   text-align: center;
   height: 20px;
+}
+
+i.fa {
+	margin: 20px;
 }
