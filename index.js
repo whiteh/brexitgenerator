@@ -5,10 +5,11 @@ const app = express()
 const fs = require('fs');
 const md5 = require("md5");
 const RateLimit = require('express-rate-limit');
+const votes = require("./model/db.js");
 
 const limiter = new RateLimit({
   windowMs: 0*1000, // 30 secs
-  max: 1, // limit each IP to 1 requests per windowMs 
+  max: 10, // limit each IP to 1 requests per windowMs 
   delayMs: 0 // disable delaying - full speed until the max limit is reached 
 });
 
@@ -70,17 +71,25 @@ app.use("/vote/:hash", limiter);
 app.put('/vote/:hash/:dir', function (req, res) {
   let hash      = req.params.hash,
   	  direction = req.params.dir,
-  	  adjective = null;
+  	  adjective = null,
+      ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
   if (typeof hash !== "string" || !adj_map[hash]) {
   	res.status("404");
   	return res.send("Policy not found");
   }
   console.log(adj_map[hash]+" voted "+direction);
-  res.status("200");
-  return res.send("Vote cast");
+  votes.addVote(ip, hash, direction, function(err, adj){
+    if (err) {
+      console.log(err);
+      res.status("500");
+      return res.send("There was an error");
+    }
+    res.status("200");
+    return res.send("Vote cast");
+  });
+  
 });
-
 
 app.get('/*', function (req, res) {
   	return res.redirect('/');
