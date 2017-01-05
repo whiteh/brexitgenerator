@@ -1,3 +1,5 @@
+"use strict"
+
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/brexit');
 const db = mongoose.connection;
