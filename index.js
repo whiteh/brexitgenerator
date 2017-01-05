@@ -91,6 +91,19 @@ app.put('/vote/:hash/:dir', function (req, res) {
   
 });
 
+app.get("/votes/:hash", function(req, res){
+  let hash      = req.params.hash;
+  votes.getVotes(hash, function(err, adj){
+    if (err) {
+      console.log(err);
+      res.status("500");
+      return res.send("There was an error");
+    }
+    res.status("200");
+    return res.send(adj);
+  });
+});
+
 app.get('/*', function (req, res) {
   	return res.redirect('/');
 });
