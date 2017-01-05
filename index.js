@@ -4,6 +4,14 @@ const express = require('express')
 const app = express()
 const fs = require('fs');
 const md5 = require("md5");
+const RateLimit = require('express-rate-limit');
+const votes = require("./model/db.js");
+
+const limiter = new RateLimit({
+  windowMs: 0*1000, // 30 secs
+  max: 10, // limit each IP to 1 requests per windowMs 
+  delayMs: 0 // disable delaying - full speed until the max limit is reached 
+});
 
 var adjectives = [];
 var adj_map = {};
@@ -25,8 +33,10 @@ loadAdjectives(function(err, arr){
 	}
 	adjectives = arr;
 	adjectives.forEach(function(a){
-		adj_map[md5(a)] = a;
-		console.log(md5(a)+ " => " + a);
+		let m = md5(a);
+		adj_map[m] = a;
+		console.log(m+ " => " + a);
+
 	});
 	console.log(arr.length+" adjectives loaded");
 });
@@ -52,9 +62,52 @@ app.get('/i/:hash', function (req, res) {
   adjective = adjective.trim();
   res.render('index', { message: '\"'+adjective+'" Brexit', key: hash, encoded: encodeURIComponent('I got \"'+adjective+'" #Brexit - what\'s your policy?') })
 });
+
+
+// Voting mechanism
+
+app.use("/vote/:hash", limiter);
+
+app.put('/vote/:hash/:dir', function (req, res) {
+  let hash      = req.params.hash,
+  	  direction = req.params.dir,
+  	  adjective = null,
+      ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+  if (typeof hash !== "string" || !adj_map[hash]) {
+  	res.status("404");
+  	return res.send("Policy not found");
+  }
+  console.log(adj_map[hash]+" voted "+direction);
+  votes.addVote(ip, hash, direction, function(err, adj){
+    if (err) {
+      console.log(err);
+      res.status("500");
+      return res.send("There was an error");
+    }
+    res.status("200");
+    return res.send("Vote cast");
+  });
+  
+});
+
+app.get("/votes/:hash", function(req, res){
+  let hash      = req.params.hash;
+  votes.getVotes(hash, function(err, adj){
+    if (err) {
+      console.log(err);
+      res.status("500");
+      return res.send("There was an error");
+    }
+    res.status("200");
+    return res.send(adj);
+  });
+});
+
 app.get('/*', function (req, res) {
   	return res.redirect('/');
 });
 app.listen(3000, function () {
+  console.log("")
   console.log('Example app listening on port 3000!')
 })

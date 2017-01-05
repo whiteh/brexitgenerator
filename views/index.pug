@@ -3,22 +3,91 @@ html
     title= "Brexit Policy Generator: "+message
     link(rel='stylesheet', href='/style/main.css')
     link(href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet")
+    link(href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet")
     meta(property="og:url" content="http://brexit.greenwood.io/")
     meta(property="og:image" content="http://brexit.greenwood.io/img/bg.jpg")
     meta(property="og:title" content="The Brexit Policy Generator")
     meta(property="fb:app_id" content="1874524392804097")
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js")
+
   body
     div(class="main")
       div(class="content-box")
         p="Your Brexit policy is..."
         h1= message
+        i(style="color: green;" data-dir="up" class="vote fa icon-thumbs-up icon-2x")
         a(class="button", href="/") Generate
+        i(style="color: red;" data-dir="down" class="vote fa icon-thumbs-down icon-2x")
+        span(id="vote-counts" width="100%" height="10px" style="margin-top:20px;display:block")
+          span(class="vote-count" data-dir="up" height="10px", style="display:inline-block;background-color: green; width:25%")
+          span(class="vote-count" data-dir="down" height="10px", style="display:inline-block;background-color: red; width:75%")
+          
       div(class="social-box")
         a(class="twitter-share-button", href="https://twitter.com/intent/tweet?text="+encoded,data-size="small") Tweet
         div(class="fb-share-button", data-href="http://brexit.greenwood.io", data-layout="button_count", data-size="small", data-mobile-iframe="true")
             a(class="fb-xfbml-parse-ignore", target="_blank", href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fbrexit.greenwood.io%2Fi%2F"+hash+"%2F&amp;src=sdkpreparse") Share
-
     div(class="footer") Created with an image from <a href="http://www.publicdomainpictures.net/pictures/190000/velka/united-kingdom-flag-1468580123n1l.jpg" target="_blank">here</a> and a dictionary from <a href="https://wordnet.princeton.edu/" target="_blank">here</a>.
+
+    script.
+      key="#{key}"
+      function castVote(direction) {
+        console.log(`Vote ${key} ${direction}`)
+        $.ajax(`/vote/${key}/${direction}`, {
+          method: "PUT",
+          success: function(){
+            window.location = "/";
+          }
+          });
+      }
+
+      $('.vote').each(function(elem){
+        $(this).click(function(){
+          if (!this.dataset.hasOwnProperty("dir")) {
+            return;
+          }
+          let direction = this.dataset.dir;
+          castVote(direction);
+        });
+      });
+      console.log(key);
+      //Get votes
+      (function(){
+      console.log("test");
+        $.ajax(`/votes/${key}/`, {
+            method: "GET",
+            success: function(data){
+              let total = 0;
+              for (let a in data) {
+                console.log(a);
+                  total += data[a];
+              }
+              if (total === 0) {
+                $("#vote-counts").html("No votes yet");
+              }
+              $(".vote-count").each(function(elem){
+                let direction = null,
+                    votes = 0,
+                    split = 0;
+                if (!this.dataset.hasOwnProperty("dir")) {
+                  return;
+                }
+                direction = this.dataset.dir;
+                votes = data[direction] || 0;
+                split = Math.floor((votes/total)*100)+"%"
+                console.log(split);
+                $(this).css("width", split);
+                if (votes !=0){
+                  $(this).html(split);  
+                }
+              });
+            },
+            error: function(data) {
+              console.log("something went wrong");
+              console.log(data);
+            }
+        });
+      }());
+      
     //Twitter scripts
     script.
         window.twttr = (function(d, s, id) {
