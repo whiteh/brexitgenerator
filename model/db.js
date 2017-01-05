@@ -21,7 +21,7 @@ const adjectiveSchema = mongoose.Schema({
 
 adjectiveSchema.methods.vote = function(ip, dir, cb) {
     const ip_hash = md5(ip);
-    if (this.votes.indexOf(ip_hash) < 0 || true) {
+    if (this.votes.indexOf(ip_hash) < 0 ) {
         this.votes.push(ip_hash);
         this[dir] +=1;
     }
